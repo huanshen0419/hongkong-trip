@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#E8EEF5">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="港澳旅行">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<title>港澳 · 旅行</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --safe-top: env(safe-area-inset-top, 50px);
+  --safe-bottom: env(safe-area-inset-bottom, 34px);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+
+  /* Light palette */
+  --bg:           #E8EEF5;
+  --glass-card:   rgba(255,255,255,0.58);
+  --glass-header: rgba(255,255,255,0.72);
+  --glass-tab:    rgba(255,255,255,0.78);
+  --border:       rgba(255,255,255,0.80);
+  --border-inner: rgba(0,0,0,0.06);
+  --text-1: #1C1C1E;
+  --text-2: rgba(60,60,67,0.55);
+  --text-3: rgba(60,60,67,0.38);
+  --blue:   #007AFF;
+}
+
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text-1);
+  background: var(--bg);
+  min-height: 100vh;
+  padding-bottom: calc(88px + var(--safe-bottom));
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── Light Aurora blobs (subtle, daylight) ── */
+.blobs {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+}
+.blob-1 { width: 70vw; height: 70vw; top: -15%; left: -15%; background: #A8D4FF; }
+.blob-2 { width: 60vw; height: 60vw; bottom: -10%; right: -10%; background: #C4DFFF; }
+.blob-3 { width: 50vw; height: 50vw; top: 35%; left: 30%; background: #D8EEFF; opacity: 0.55; }
+
+/* ── App shell ── */
+.app { position: relative; z-index: 1; }
+
+/* ── Header ── */
+.header {
+  position: sticky;
+  top: 0;
+  padding: calc(var(--safe-top) + 8px) 16px 0;
+  z-index: 100;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.header-pill {
+  background: var(--glass-header);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-radius: 22px;
+  border: 0.5px solid var(--border);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); margin-bottom: 2px; }
+.header-title   { font-size: 21px; font-weight: 700; letter-spacing: -0.025em; color: var(--text-1); line-height: 1; }
+.header-date    { font-size: 13px; font-weight: 600; color: var(--text-2); text-align: right; letter-spacing: -0.01em; }
+
+/* ── Combined Day Hero (摘要 + 橫向動態) ── */
+.day-hero {
+  margin: 12px 16px 0;
+  padding: 16px 16px 8px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+  background: var(--glass-card);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  display: flex;
+  flex-direction: column;
+}
+.day-hero-header {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 18px;
+}
+.day-dot {
+  width: 42px; height: 42px;
+  border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.day-hero-num  { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.day-hero-name { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-1); margin: 1px 0; }
+.day-hero-sub  { font-size: 13px; color: var(--text-2); }
+
+/* ── Route Scroller (整合在 Day Hero 內) ── */
+.route-scroller-container { width: 100%; margin-left: -4px; }
+.route-scroller { 
+  display: flex; align-items: center; overflow-x: auto; 
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; 
+  padding-bottom: 8px; gap: 8px; 
+}
+.route-scroller::-webkit-scrollbar { display: none; }
+
+.route-node { display: flex; flex-direction: column; align-items: center; scroll-snap-align: start; flex-shrink: 0; min-width: 52px; }
+.route-circle { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); margin-bottom: 6px; z-index: 2; }
+.route-label { font-size: 11px; font-weight: 700; color: var(--text-1); white-space: nowrap; }
+.route-sublabel { font-size: 9px; font-weight: 600; color: var(--text-2); white-space: nowrap; transform: scale(0.95); margin-top: 1px; }
+.route-connector { flex-shrink: 0; width: 20px; height: 3px; border-radius: 1.5px; margin-top: -22px; opacity: 0.4; }
+
+/* 節點顏色 */
+.n-teal   { background: #32ADE6; }
+.n-blue   { background: #007AFF; }
+.n-red    { background: #FF3B30; }
+.n-green  { background: #34C759; }
+.n-orange { background: #FF9500; }
+.n-gray   { background: #8E8E93; }
+
+/* ── Content pane ── */
+.content { padding: 16px 16px 0; display: none; animation: up .35s cubic-bezier(.22,1,.36,1) forwards; }
+.content.active { display: block; }
+@keyframes up { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+
+/* ── Section label ── */
+.sec {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-3);
+  padding: 0 4px 8px;
+  margin-top: 20px;
+}
+.sec:first-child { margin-top: 0; }
+
+/* ── Glass card ── */
+.card {
+  background: var(--glass-card);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border: 0.5px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+}
+
+/* ── Row ── */
+.row {
+  display: flex; align-items: center;
+  padding: 12px 14px; gap: 12px;
+  position: relative;
+  text-decoration: none; color: inherit;
+  -webkit-user-select: none; user-select: none;
+  transition: background .16s;
+}
+a.row:active { background: rgba(0,0,0,0.04); }
+.row + .row::before {
+  content: ''; position: absolute;
+  top: 0; left: 58px; right: 0;
+  height: 0.5px; background: var(--border-inner);
+}
+
+/* ── Icon ── */
+.ico {
+  width: 32px; height: 32px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+  color: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+.i-blue   { background: #007AFF; }
+.i-indigo { background: #5E5CE6; }
+.i-green  { background: #34C759; }
+.i-orange { background: #FF9500; }
+.i-red    { background: #FF3B30; }
+.i-teal   { background: #32ADE6; }
+.i-gray   { background: #8E8E93; }
+.i-brown  { background: #A2845E; }
+.i-purple { background: #AF52DE; }
+
+/* ── Row text ── */
+.rt { flex:1; min-width:0; }
+.rt-title { font-size: 15px; font-weight: 600; letter-spacing: -0.018em; color: var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rt-sub   { font-size: 12.5px; color: var(--text-2); margin-top: 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ── Pills ── */
+.pills { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.pill {
+  font-size: 10.5px; font-weight: 600;
+  padding: 2px 7px; border-radius: 5px;
+  letter-spacing: 0.01em; white-space: nowrap;
+}
+.p-mtr     { background: rgba(255,59,48,0.10); color: #D70015; }
+.p-tram    { background: rgba(52,199,89,0.12); color: #1A7A34; }
+.p-shuttle { background: rgba(255,149,0,0.12); color: #C07000; }
+.p-walk    { background: rgba(142,142,147,0.12); color: #636366; }
+.p-ferry   { background: rgba(0,122,255,0.10); color: #0055D4; }
+.p-aep     { background: rgba(94,92,230,0.12); color: #3634A3; }
+
+/* ── Time ── */
+.time { font-size: 13px; font-weight: 600; color: var(--text-3); flex-shrink:0; }
+
+/* ── Map button ── */
+.map-btn {
+  background: rgba(0,122,255,0.10);
+  border: 0.5px solid rgba(0,122,255,0.22);
+  color: #0055D4;
+  font-size: 11.5px; font-weight: 700;
+  padding: 5px 11px; border-radius: 10px;
+  flex-shrink: 0; white-space: nowrap;
+  transition: all .16s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+a.row:active .map-btn { background: rgba(0,122,255,0.18); }
+
+/* ── Chips ── */
+.chips { display:flex; gap:7px; flex-wrap:wrap; margin: 10px 16px 0; }
+.chip {
+  background: var(--glass-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 7px 12px;
+  display: flex; align-items: center; gap: 7px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.85);
+}
+.chip i { color: var(--blue); font-size: 14px; }
+.chip-label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.chip-val   { font-size: 12px; font-weight: 700; color: var(--text-1); }
+
+/* ── Map diagram cards ── */
+.map-card {
+  background: var(--glass-card);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 0.5px solid var(--border);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+}
+.map-title { font-size: 13px; font-weight: 700; color: var(--text-2); text-align:center; margin-bottom: 14px; letter-spacing:-0.01em; }
+
+/* ── Tab bar ── */
+.tabbar {
+  position: fixed;
+  bottom: calc(10px + var(--safe-bottom));
+  left: 14px; right: 14px;
+  height: 62px;
+  background: var(--glass-tab);
+  backdrop-filter: blur(50px) saturate(200%);
+  -webkit-backdrop-filter: blur(50px) saturate(200%);
+  border-radius: 31px;
+  border: 0.5px solid var(--border);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 6px;
+  z-index: 200;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Tab Indicator (Sliding Background) ── */
+.tab-indicator {
+  position: absolute;
+  top: 7px; /* (62px - 48px) / 2 */
+  left: 6px; /* Match padding */
+  height: 48px;
+  width: calc((100% - 12px) / 5); /* 5 tabs, minus left/right padding */
+  background: rgba(0,0,0,0.06);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+  border-radius: 24px;
+  z-index: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.tab-indicator.dragging {
+  transition: none;
+}
+
+.tab {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  width: 20%; height: 48px; border-radius: 24px;
+  justify-content: center; cursor: pointer;
+  color: var(--text-3);
+  transition: all .22s cubic-bezier(.22,1,.36,1);
+  z-index: 1;
+  position: relative;
+}
+.tab-ico   { font-size: 20px; line-height:1; transition: transform .22s cubic-bezier(.22,1,.36,1); pointer-events: none; }
+.tab-lbl   { font-size: 9.5px; font-weight: 700; letter-spacing: 0.02em; pointer-events: none; }
+.tab.active {
+  color: var(--blue);
+}
+.tab.active .tab-ico { transform: scale(1.1); }
+</style>
+</head>
+<body>
+
+<div class="blobs">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<div class="app">
+
+<div class="header" id="main-header">
+  <div class="header-pill">
+    <div>
+      <div class="header-eyebrow">2026 夏日行程</div>
+      <div class="header-title">港澳旅行</div>
+    </div>
+    <div class="header-date" id="header-date">Jun 20<br>2026</div>
+  </div>
+</div>
+
+<div class="chips" id="chips-d1">
+  <div class="chip"><i class="fa-solid fa-plane"></i><span class="chip-label">航班</span><span class="chip-val">HB711 · 02:55</span></div>
+  <div class="chip"><i class="fa-solid fa-bed"></i><span class="chip-label">飯店</span><span class="chip-val">一尚荷李活道</span></div>
+</div>
+<div class="chips" id="chips-d2" style="display:none">
+  <div class="chip"><i class="fa-solid fa-cow"></i><span class="chip-label">早餐</span><span class="chip-val">澳洲牛奶公司</span></div>
+  <div class="chip"><i class="fa-solid fa-water"></i><span class="chip-label">下午</span><span class="chip-val">西環海旁</span></div>
+</div>
+<div class="chips" id="chips-d3" style="display:none">
+  <div class="chip"><i class="fa-solid fa-ship"></i><span class="chip-label">渡輪</span><span class="chip-val">11:30 上環碼頭</span></div>
+  <div class="chip"><i class="fa-solid fa-building-columns"></i><span class="chip-label">目的地</span><span class="chip-val">大三巴</span></div>
+</div>
+<div class="chips" id="chips-d4" style="display:none">
+  <div class="chip"><i class="fa-solid fa-plane"></i><span class="chip-label">回程</span><span class="chip-val">HB704 · 18:30</span></div>
+  <div class="chip"><i class="fa-solid fa-building-columns"></i><span class="chip-label">上午</span><span class="chip-val">大館 · PMQ</span></div>
+</div>
+<div class="chips" id="chips-map" style="display:none">
+  <div class="chip"><i class="fa-solid fa-map-location-dot"></i><span class="chip-label">路線圖</span><span class="chip-val">港鐵 · 叮叮 · 發財車</span></div>
+</div>
+
+
+<div id="d1" class="content active">
+
+  <div class="day-hero">
+    <div class="day-hero-header">
+      <div class="day-dot" style="background:#007AFF"><i class="fa-solid fa-plane"></i></div>
+      <div>
+        <div class="day-hero-num">Day 1 · 6 月 20 日</div>
+        <div class="day-hero-name">啟程 · 抵達香港</div>
+        <div class="day-hero-sub">深夜出發 → 晨間抵港</div>
+      </div>
+    </div>
+    <div class="route-scroller-container">
+      <div class="route-scroller">
+        <div class="route-node"><div class="route-circle n-teal"><i class="fa-solid fa-plane"></i></div><span class="route-label">機場</span><span class="route-sublabel">機捷/快綫</span></div>
+        <div class="route-connector n-teal"></div>
+        <div class="route-node"><div class="route-circle n-teal"><i class="fa-solid fa-train-subway"></i></div><span class="route-label">香港站</span><span class="route-sublabel">轉港島線</span></div>
+        <div class="route-connector n-blue"></div>
+        <div class="route-node"><div class="route-circle n-blue"><i class="fa-solid fa-bed"></i></div><span class="route-label">上環</span><span class="route-sublabel">放行李</span></div>
+        <div class="route-connector n-green"></div>
+        <div class="route-node"><div class="route-circle n-green"><i class="fa-solid fa-train-tram"></i></div><span class="route-label">灣仔</span><span class="route-sublabel">搭叮叮車</span></div>
+        <div class="route-connector n-green"></div>
+        <div class="route-node"><div class="route-circle n-green"><i class="fa-solid fa-train-tram"></i></div><span class="route-label">銅鑼灣</span><span class="route-sublabel">逛街/茶姬</span></div>
+        <div class="route-connector n-red"></div>
+        <div class="route-node"><div class="route-circle n-red"><i class="fa-solid fa-mountain-sun"></i></div><span class="route-label">太平山</span><span class="route-sublabel">山頂纜車</span></div>
+        <div class="route-connector n-gray"></div>
+        <div class="route-node"><div class="route-circle n-gray"><i class="fa-solid fa-martini-glass"></i></div><span class="route-label">蘭桂坊</span><span class="route-sublabel">酒吧宵夜</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin-top:16px">交通啟程</div>
+  <div class="card">
+    <div class="row">
+      <div class="ico i-indigo"><i class="fa-solid fa-train-subway"></i></div>
+      <div class="rt">
+        <div class="rt-title">機捷直達車 A — 北車</div>
+        <div class="rt-sub">台北車站上車</div>
+        <div class="pills"><span class="pill p-mtr">桃園機場捷運</span></div>
+      </div>
+      <div class="time">23:00</div>
+    </div>
+    <div class="row">
+      <div class="ico i-indigo"><i class="fa-solid fa-train-subway"></i></div>
+      <div class="rt">
+        <div class="rt-title">機捷直達車 B — 長庚</div>
+        <div class="rt-sub">長庚醫院 → 一航 12 號</div>
+      </div>
+      <div class="time">23:22</div>
+    </div>
+    <div class="row">
+      <div class="ico i-blue"><i class="fa-solid fa-plane-departure"></i></div>
+      <div class="rt">
+        <div class="rt-title">大灣區航空 HB711</div>
+        <div class="rt-sub">台北 → 香港</div>
+        <div class="pills"><span class="pill p-walk">已辦自動登機</span></div>
+      </div>
+      <div class="time">02:55</div>
+    </div>
+    <div class="row">
+      <div class="ico i-blue"><i class="fa-solid fa-bolt"></i></div>
+      <div class="rt">
+        <div class="rt-title">機場快綫 → 上環</div>
+        <div class="pills"><span class="pill p-aep">機場快綫</span><span class="pill p-mtr">港島線</span></div>
+      </div>
+      <div class="time">05:54</div>
+    </div>
+  </div>
+
+  <div class="sec">住宿 & 換錢</div>
+  <div class="card">
+    <a href="https://maps.app.goo.gl/4Ctr9G9KmpLh2k5n8" target="_blank" class="row">
+      <div class="ico i-red"><i class="fa-solid fa-bed"></i></div>
+      <div class="rt">
+        <div class="rt-title">一尚酒店 (荷李活道)</div>
+        <div class="rt-sub">寄放行李</div>
+        <div class="pills"><span class="pill p-walk">上環站步行 6 分鐘</span></div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/7PhQ3NVgVRFdUgGc8" target="_blank" class="row">
+      <div class="ico i-teal"><i class="fa-solid fa-money-bill-transfer"></i></div>
+      <div class="rt">
+        <div class="rt-title">小女孩找換店</div>
+        <div class="rt-sub">09:00 開門</div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+
+  <div class="sec">早茶選項</div>
+  <div class="card">
+    <a href="https://maps.app.goo.gl/nhxz8sgxbEwtbQ3b6" target="_blank" class="row">
+      <div class="ico i-brown"><i class="fa-solid fa-coffee"></i></div>
+      <div class="rt"><div class="rt-title">瑞幸咖啡 (上環)</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/1AFhpHZ7MiTbcjQP7" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-bowl-rice"></i></div>
+      <div class="rt"><div class="rt-title">蓮香樓</div><div class="rt-sub">百年老字號早茶</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/nMp1U3FdqcEuNF4V6" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-bowl-food"></i></div>
+      <div class="rt"><div class="rt-title">六安居</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+
+  <div class="sec">灣仔 & 銅鑼灣</div>
+  <div class="card">
+    <div class="row">
+      <div class="ico i-green"><i class="fa-solid fa-train-tram"></i></div>
+      <div class="rt">
+        <div class="rt-title">叮叮車前往灣仔</div>
+        <div class="pills"><span class="pill p-tram">堅尼地城–跑馬地線</span></div>
+      </div>
+    </div>
+    <a href="https://maps.app.goo.gl/gD4yYvuUYG5ocmhz5" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-bowl-food"></i></div>
+      <div class="rt"><div class="rt-title">腸粉皇</div><div class="rt-sub">午餐</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/sbcQrF97CUmUKj36A" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-drumstick-bite"></i></div>
+      <div class="rt"><div class="rt-title">竺扶大班燒味</div><div class="rt-sub">午餐</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/hrgyrwmYXUkWp837A" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-bowl-food"></i></div>
+      <div class="rt"><div class="rt-title">甘牌燒鵝</div><div class="rt-sub">米其林推薦</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/taeFzFmqJJVa34qF8" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-cookie"></i></div>
+      <div class="rt"><div class="rt-title">Bakehouse</div><div class="rt-sub">必吃蛋撻</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/frP8fY6he3W1oZws7" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-ice-cream"></i></div>
+      <div class="rt"><div class="rt-title">義順牛奶公司</div><div class="rt-sub">雙皮燉奶</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/VGtsSXBrVai1YuG3A" target="_blank" class="row">
+      <div class="ico i-green"><i class="fa-solid fa-glass-water"></i></div>
+      <div class="rt"><div class="rt-title">霸王茶姬 (名店坊)</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/zSHHdktqhJRbmKjN8" target="_blank" class="row">
+      <div class="ico i-green"><i class="fa-solid fa-glass-water"></i></div>
+      <div class="rt"><div class="rt-title">喜茶 (駱克道)</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+
+  <div class="sec">夜景 & 蘭桂坊</div>
+  <div class="card">
+    <a href="https://maps.app.goo.gl/4Ctr9G9KmpLh2k5n8" target="_blank" class="row">
+      <div class="ico i-red"><i class="fa-solid fa-bed"></i></div>
+      <div class="rt"><div class="rt-title">回飯店補眠</div><div class="rt-sub">15:00 充電備戰</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/KcUHd46YrZtZAKPC8" target="_blank" class="row">
+      <div class="ico i-teal"><i class="fa-solid fa-mountain-sun"></i></div>
+      <div class="rt">
+        <div class="rt-title">太平山頂</div>
+        <div class="rt-sub">香港最美夜景</div>
+        <div class="pills"><span class="pill p-mtr">山頂纜車</span></div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=Quinary+Hong+Kong" target="_blank" class="row">
+      <div class="ico i-gray"><i class="fa-solid fa-martini-glass"></i></div>
+      <div class="rt"><div class="rt-title">Quinary</div><div class="rt-sub">亞洲50大 · 伯爵茶馬丁尼</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=The+Iron+Fairies+Hong+Kong" target="_blank" class="row">
+      <div class="ico i-gray"><i class="fa-solid fa-wine-glass"></i></div>
+      <div class="rt"><div class="rt-title">The Iron Fairies</div><div class="rt-sub">蝴蝶夢幻裝潢酒吧</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=翠華餐廳+威靈頓街" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-bowl-food"></i></div>
+      <div class="rt"><div class="rt-title">翠華餐廳 (威靈頓街)</div><div class="rt-sub">喝完必吃 · 奶油豬 & 魚蛋粉</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+  <div style="height:6px"></div>
+</div>
+
+
+<div id="d2" class="content">
+
+  <div class="day-hero">
+    <div class="day-hero-header">
+      <div class="day-dot" style="background:#34C759"><i class="fa-solid fa-city"></i></div>
+      <div>
+        <div class="day-hero-num">Day 2 · 6 月 21 日</div>
+        <div class="day-hero-name">港島探索</div>
+        <div class="day-hero-sub">佐敦 → 西環 → 夜酒</div>
+      </div>
+    </div>
+    <div class="route-scroller-container">
+      <div class="route-scroller">
+        <div class="route-node"><div class="route-circle n-blue"><i class="fa-solid fa-bed"></i></div><span class="route-label">上環</span><span class="route-sublabel">出發</span></div>
+        <div class="route-connector n-red"></div>
+        <div class="route-node"><div class="route-circle n-red"><i class="fa-solid fa-cow"></i></div><span class="route-label">佐敦</span><span class="route-sublabel">澳洲牛奶公司</span></div>
+        <div class="route-connector n-red"></div>
+        <div class="route-node"><div class="route-circle n-red"><i class="fa-solid fa-train-subway"></i></div><span class="route-label">中環轉乘</span><span class="route-sublabel">轉港島線</span></div>
+        <div class="route-connector n-blue"></div>
+        <div class="route-node"><div class="route-circle n-blue"><i class="fa-solid fa-camera"></i></div><span class="route-label">堅尼地城</span><span class="route-sublabel">西環海旁</span></div>
+        <div class="route-connector n-gray"></div>
+        <div class="route-node"><div class="route-circle n-gray"><i class="fa-solid fa-martini-glass"></i></div><span class="route-label">中環</span><span class="route-sublabel">Bar Leone</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin-top:16px">早餐 · 佐敦區</div>
+  <div class="card">
+    <div class="row">
+      <div class="ico i-indigo"><i class="fa-solid fa-train-subway"></i></div>
+      <div class="rt">
+        <div class="rt-title">前往佐敦站</div>
+        <div class="pills"><span class="pill p-mtr">荃灣線 佐敦站</span></div>
+      </div>
+    </div>
+    <a href="https://maps.app.goo.gl/Wd25rZgAUC7ixXCt9" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-cow"></i></div>
+      <div class="rt"><div class="rt-title">澳洲牛奶公司</div><div class="rt-sub">7:30 開門 · 燉奶 & 炒蛋</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/HWtkGy5dzMLqjdpe9" target="_blank" class="row">
+      <div class="ico i-brown"><i class="fa-solid fa-mug-saucer"></i></div>
+      <div class="rt"><div class="rt-title">百寶茶檔</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/j8SAS3ZfVaR1poCF8" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-lemon"></i></div>
+      <div class="rt"><div class="rt-title">椰汁大王</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/L9sNeLD2ggxsDB2z8" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-utensils"></i></div>
+      <div class="rt"><div class="rt-title">光榮冰室</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/ctR8fwJ1hDc2PxKG8" target="_blank" class="row">
+      <div class="ico i-green"><i class="fa-solid fa-glass-water"></i></div>
+      <div class="rt"><div class="rt-title">霸王茶姬 (新世紀廣場)</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+
+  <div class="sec">下午 · 西環海旁</div>
+  <div class="card">
+    <a href="https://maps.app.goo.gl/NCxxokZQEdeqzEK7A" target="_blank" class="row">
+      <div class="ico i-green"><i class="fa-solid fa-train-tram"></i></div>
+      <div class="rt">
+        <div class="rt-title">叮叮車 → 西環</div>
+        <div class="rt-sub">15:00 出發</div>
+        <div class="pills"><span class="pill p-tram">堅尼地城方向</span></div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/4XVXmb68rNaK166KA" target="_blank" class="row">
+      <div class="ico i-teal"><i class="fa-solid fa-camera"></i></div>
+      <div class="rt"><div class="rt-title">西環鐘聲泳棚</div><div class="rt-sub">步行 15 分 · 賞夕陽</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/ABER4y2S78LJvVRv9" target="_blank" class="row">
+      <div class="ico i-teal"><i class="fa-solid fa-water"></i></div>
+      <div class="rt"><div class="rt-title">堅尼地城海旁</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/bzBi5x8sAizmETzK6" target="_blank" class="row">
+      <div class="ico i-teal"><i class="fa-solid fa-tree"></i></div>
+      <div class="rt"><div class="rt-title">卑路乍灣海濱長廊</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/DMHR2JLYhguQX1qB9" target="_blank" class="row">
+      <div class="ico i-green"><i class="fa-solid fa-leaf"></i></div>
+      <div class="rt"><div class="rt-title">Slowood</div><div class="rt-sub">環保文創選物店</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+
+  <div class="sec">晚餐 & 亞洲頂級酒吧</div>
+  <div class="card">
+    <a href="https://maps.app.goo.gl/AxcMWNQ77nPMgq5z7" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-bowl-food"></i></div>
+      <div class="rt"><div class="rt-title">新興食家</div><div class="rt-sub">流沙包 · 16:00 關門</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/mhFgG56iNwVBJ2i36" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-fire-burner"></i></div>
+      <div class="rt"><div class="rt-title">嚐囍煲仔小菜</div><div class="rt-sub">米其林推介煲仔飯</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/dE64kEGeAdXMtEPU7" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-shrimp"></i></div>
+      <div class="rt"><div class="rt-title">蝦三少</div><div class="rt-sub">建議前一天訂位</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/RJEJ4gpux57TVgyc7" target="_blank" class="row">
+      <div class="ico i-gray"><i class="fa-solid fa-trophy"></i></div>
+      <div class="rt"><div class="rt-title">Bar Leone</div><div class="rt-sub">亞洲第一酒吧</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+  <div style="height:6px"></div>
+</div>
+
+
+<div id="d3" class="content">
+
+  <div class="day-hero">
+    <div class="day-hero-header">
+      <div class="day-dot" style="background:#FF9500"><i class="fa-solid fa-ship"></i></div>
+      <div>
+        <div class="day-hero-num">Day 3 · 6 月 22 日</div>
+        <div class="day-hero-name">澳門一日遊</div>
+        <div class="day-hero-sub">上環碼頭 → 氹仔 → 大三巴</div>
+      </div>
+    </div>
+    <div class="route-scroller-container">
+      <div class="route-scroller">
+        <div class="route-node"><div class="route-circle n-blue"><i class="fa-solid fa-ship"></i></div><span class="route-label">上環碼頭</span><span class="route-sublabel">港澳客輪</span></div>
+        <div class="route-connector n-blue"></div>
+        <div class="route-node"><div class="route-circle n-orange"><i class="fa-solid fa-bus"></i></div><span class="route-label">氹仔碼頭</span><span class="route-sublabel">發財車</span></div>
+        <div class="route-connector n-orange"></div>
+        <div class="route-node"><div class="route-circle n-orange"><i class="fa-solid fa-building-columns"></i></div><span class="route-label">大三巴</span><span class="route-sublabel">澳門半島</span></div>
+        <div class="route-connector n-orange"></div>
+        <div class="route-node"><div class="route-circle n-orange"><i class="fa-solid fa-egg"></i></div><span class="route-label">官也街</span><span class="route-sublabel">氹仔區</span></div>
+        <div class="route-connector n-blue"></div>
+        <div class="route-node"><div class="route-circle n-red"><i class="fa-solid fa-fire"></i></div><span class="route-label">尖沙咀</span><span class="route-sublabel">大排檔</span></div>
+        <div class="route-connector n-red"></div>
+        <div class="route-node"><div class="route-circle n-blue"><i class="fa-solid fa-bed"></i></div><span class="route-label">上環</span><span class="route-sublabel">回飯店</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin-top:16px">前往澳門</div>
+  <div class="card">
+    <div class="row">
+      <div class="ico i-indigo"><i class="fa-solid fa-train-subway"></i></div>
+      <div class="rt">
+        <div class="rt-title">前往上環碼頭</div>
+        <div class="pills"><span class="pill p-mtr">港島線 上環站</span></div>
+      </div>
+    </div>
+    <a href="https://maps.app.goo.gl/SGEMntm9wUUQ6XSL9" target="_blank" class="row">
+      <div class="ico i-blue"><i class="fa-solid fa-ship"></i></div>
+      <div class="rt">
+        <div class="rt-title">港澳客輪碼頭</div>
+        <div class="rt-sub">11:30 船班出發</div>
+        <div class="pills"><span class="pill p-ferry">噴射船 約 1 小時</span></div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/BL6rbcDSWGB6DR537" target="_blank" class="row">
+      <div class="ico i-blue"><i class="fa-solid fa-anchor"></i></div>
+      <div class="rt">
+        <div class="rt-title">氹仔客運碼頭 · 抵澳門</div>
+        <div class="pills"><span class="pill p-shuttle">永利 / MGM 發財車</span></div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+
+  <div class="sec">澳門半島</div>
+  <div class="card">
+    <a href="https://maps.google.com/?q=黃枝記+議事亭前地" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-bowl-food"></i></div>
+      <div class="rt"><div class="rt-title">黃枝記 (議事亭前地)</div><div class="rt-sub">午餐 · 鮮蝦雲吞麵</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=大三巴牌坊" target="_blank" class="row">
+      <div class="ico i-teal"><i class="fa-solid fa-building-columns"></i></div>
+      <div class="rt">
+        <div class="rt-title">大三巴牌坊</div>
+        <div class="rt-sub">經典地標打卡</div>
+        <div class="pills"><span class="pill p-walk">步行前往</span></div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=義順牛奶公司+澳門" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-cookie"></i></div>
+      <div class="rt"><div class="rt-title">義順牛奶公司 (澳門)</div><div class="rt-sub">雙皮燉奶</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=鉅記手信+大三巴" target="_blank" class="row">
+      <div class="ico i-brown"><i class="fa-solid fa-bag-shopping"></i></div>
+      <div class="rt"><div class="rt-title">鉅記手信</div><div class="rt-sub">杏仁餅伴手禮</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+
+  <div class="sec">氹仔 & 回程</div>
+  <div class="card">
+    <a href="https://maps.app.goo.gl/zD2N3b1H1G2wK3dE8" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-egg"></i></div>
+      <div class="rt">
+        <div class="rt-title">官也街 · 安德魯蛋塔</div>
+        <div class="pills"><span class="pill p-shuttle">星際酒店 銀河快線</span></div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <div class="row">
+      <div class="ico i-blue"><i class="fa-solid fa-ship"></i></div>
+      <div class="rt">
+        <div class="rt-title">搭船回香港</div>
+        <div class="pills"><span class="pill p-shuttle">澳門銀河接駁至碼頭</span></div>
+      </div>
+      <div class="time">17:30</div>
+    </div>
+  </div>
+
+  <div class="sec">夜晚 · 尖沙咀</div>
+  <div class="card">
+    <div class="row">
+      <div class="ico i-indigo"><i class="fa-solid fa-train-subway"></i></div>
+      <div class="rt">
+        <div class="rt-title">前往尖沙咀</div>
+        <div class="pills"><span class="pill p-mtr">荃灣線 尖沙咀站</span></div>
+      </div>
+    </div>
+    <a href="https://maps.google.com/?q=妹記大排檔+尖沙咀" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-fire"></i></div>
+      <div class="rt"><div class="rt-title">妹記大排檔</div><div class="rt-sub">港式熱炒 · 避風塘</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=華記小食+尖沙咀" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-utensils"></i></div>
+      <div class="rt"><div class="rt-title">華記小食</div><div class="rt-sub">街頭牛雜 & 魚蛋</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.app.goo.gl/LkHdxrWAEiMCyB9LA" target="_blank" class="row">
+      <div class="ico i-gray"><i class="fa-solid fa-moon"></i></div>
+      <div class="rt"><div class="rt-title">eyebar</div><div class="rt-sub">iSQUARE 30F · 維港夜景</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+  <div style="height:6px"></div>
+</div>
+
+
+<div id="d4" class="content">
+
+  <div class="day-hero">
+    <div class="day-hero-header">
+      <div class="day-dot" style="background:#AF52DE"><i class="fa-solid fa-house"></i></div>
+      <div>
+        <div class="day-hero-num">Day 4 · 6 月 23 日</div>
+        <div class="day-hero-name">最後散策 · 賦歸</div>
+        <div class="day-hero-sub">中環漫步 → 機場 → 台北</div>
+      </div>
+    </div>
+    <div class="route-scroller-container">
+      <div class="route-scroller">
+        <div class="route-node"><div class="route-circle n-blue"><i class="fa-solid fa-bed"></i></div><span class="route-label">上環</span><span class="route-sublabel">退房寄物</span></div>
+        <div class="route-connector n-gray"></div>
+        <div class="route-node"><div class="route-circle n-gray"><i class="fa-solid fa-building-columns"></i></div><span class="route-label">大館/PMQ</span><span class="route-sublabel">市區散步</span></div>
+        <div class="route-connector n-gray"></div>
+        <div class="route-node"><div class="route-circle n-gray"><i class="fa-solid fa-film"></i></div><span class="route-label">半山手扶梯</span><span class="route-sublabel">懷舊巡禮</span></div>
+        <div class="route-connector n-teal"></div>
+        <div class="route-node"><div class="route-circle n-teal"><i class="fa-solid fa-plane-departure"></i></div><span class="route-label">香港站</span><span class="route-sublabel">機場快綫</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin-top:16px">早晨 · 市區</div>
+  <div class="card">
+    <a href="https://maps.app.goo.gl/eCiY3KoQnDeKhXCw6" target="_blank" class="row">
+      <div class="ico i-brown"><i class="fa-solid fa-coffee"></i></div>
+      <div class="rt"><div class="rt-title">瑞記咖啡</div><div class="rt-sub">上環熟食中心 · 懷舊港味</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=大館" target="_blank" class="row">
+      <div class="ico i-teal"><i class="fa-solid fa-building-columns"></i></div>
+      <div class="rt"><div class="rt-title">大館 Tai Kwun</div><div class="rt-sub">前中區警署 · 歐式建築群</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=PMQ+元創方" target="_blank" class="row">
+      <div class="ico i-purple"><i class="fa-solid fa-palette"></i></div>
+      <div class="rt"><div class="rt-title">PMQ 元創方</div><div class="rt-sub">設計師選物 · 文創小館</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+    <a href="https://maps.google.com/?q=半山手扶梯" target="_blank" class="row">
+      <div class="ico i-gray"><i class="fa-solid fa-film"></i></div>
+      <div class="rt"><div class="rt-title">半山手扶梯</div><div class="rt-sub">重溫王家衛電影場景</div></div>
+      <div class="map-btn"><i class="fa-solid fa-location-dot"></i> 地圖</div>
+    </a>
+  </div>
+
+  <div class="sec">回家</div>
+  <div class="card">
+    <div class="row">
+      <div class="ico i-blue"><i class="fa-solid fa-bolt"></i></div>
+      <div class="rt">
+        <div class="rt-title">機場快綫出發</div>
+        <div class="pills"><span class="pill p-aep">香港站 → 機場</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="ico i-blue"><i class="fa-solid fa-plane-departure"></i></div>
+      <div class="rt"><div class="rt-title">大灣區航空 HB704</div><div class="rt-sub">香港 → 台北</div></div>
+      <div class="time">18:30</div>
+    </div>
+  </div>
+  <div style="height:6px"></div>
+</div>
+
+
+<div id="dmap" class="content">
+  <div class="day-hero" style="background:rgba(94,92,230,0.10); padding-bottom: 14px;">
+    <div class="day-hero-header" style="margin-bottom: 0;">
+      <div class="day-dot" style="background:#5E5CE6"><i class="fa-solid fa-map-location-dot"></i></div>
+      <div>
+        <div class="day-hero-num">交通路線</div>
+        <div class="day-hero-name">港澳交通圖</div>
+        <div class="day-hero-sub">港鐵 · 叮叮車 · 澳門發財車</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin-top:16px">香港 港鐵路線</div>
+  <div class="map-card">
+    <div class="map-title">港鐵主要路線（港島 & 九龍）</div>
+    <svg viewBox="0 0 340 200" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <text x="14" y="22" font-size="10" font-weight="700" fill="rgba(0,0,0,0.25)" font-family="sans-serif" letter-spacing="0.05em">九龍</text>
+      <text x="14" y="192" font-size="10" font-weight="700" fill="rgba(0,0,0,0.25)" font-family="sans-serif" letter-spacing="0.05em">港島</text>
+
+      <rect x="0" y="88" width="340" height="26" fill="rgba(0,122,255,0.06)"/>
+      <text x="170" y="104" font-size="9.5" font-weight="600" fill="rgba(0,122,255,0.40)" text-anchor="middle" font-family="sans-serif" letter-spacing="0.04em">維多利亞港</text>
+
+      <line x1="22" y1="52" x2="318" y2="52" stroke="#E3002B" stroke-width="4.5" stroke-linecap="round"/>
+      <circle cx="82" cy="52" r="4" fill="#fff" stroke="#E3002B" stroke-width="2.5"/>
+      <text x="72" y="44" font-size="9.5" fill="rgba(0,0,0,0.45)" font-family="sans-serif">深水埗</text>
+      <circle cx="170" cy="52" r="5.5" fill="#fff" stroke="#E3002B" stroke-width="3"/>
+      <text x="158" y="44" font-size="10" font-weight="700" fill="rgba(0,0,0,0.65)" font-family="sans-serif">尖沙咀</text>
+      <circle cx="258" cy="52" r="4" fill="#fff" stroke="#E3002B" stroke-width="2.5"/>
+      <text x="248" y="44" font-size="9.5" fill="rgba(0,0,0,0.45)" font-family="sans-serif">旺角</text>
+
+      <line x1="170" y1="52" x2="170" y2="118" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+      <line x1="18" y1="140" x2="322" y2="140" stroke="#007AFF" stroke-width="4.5" stroke-linecap="round"/>
+      <circle cx="52" cy="140" r="4" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>
+      <text x="34" y="132" font-size="9.5" fill="rgba(0,0,0,0.45)" font-family="sans-serif">堅尼地城</text>
+      <circle cx="118" cy="140" r="4" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>
+      <text x="108" y="132" font-size="9.5" fill="rgba(0,0,0,0.45)" font-family="sans-serif">上環</text>
+      <circle cx="170" cy="140" r="7" fill="#fff" stroke="#1C1C1E" stroke-width="2.5"/>
+      <text x="158" y="160" font-size="11" font-weight="700" fill="rgba(0,0,0,0.75)" font-family="sans-serif">中環</text>
+      <circle cx="228" cy="140" r="4" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>
+      <text x="218" y="132" font-size="9.5" fill="rgba(0,0,0,0.45)" font-family="sans-serif">灣仔</text>
+      <circle cx="292" cy="140" r="4" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>
+      <text x="278" y="132" font-size="9.5" fill="rgba(0,0,0,0.45)" font-family="sans-serif">銅鑼灣</text>
+
+      <line x1="18" y1="176" x2="322" y2="176" stroke="#34C759" stroke-width="3" stroke-dasharray="7,5" stroke-linecap="round"/>
+      <text x="256" y="192" font-size="9.5" font-weight="700" fill="rgba(52,199,89,0.80)" font-family="sans-serif">叮叮車路線</text>
+
+      <line x1="18" y1="198" x2="34" y2="198" stroke="#E3002B" stroke-width="3" stroke-linecap="round"/>
+      <text x="38" y="201" font-size="9" fill="rgba(227,0,43,0.75)" font-family="sans-serif">荃灣線</text>
+      <line x1="84" y1="198" x2="100" y2="198" stroke="#007AFF" stroke-width="3" stroke-linecap="round"/>
+      <text x="104" y="201" font-size="9" fill="rgba(0,122,255,0.75)" font-family="sans-serif">港島線</text>
+    </svg>
+  </div>
+
+  <div class="sec">澳門 · 零費用接駁</div>
+  <div class="map-card">
+    <div class="map-title">氹仔碼頭 → 澳門半島 → 回程</div>
+    <svg viewBox="0 0 320 162" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <rect x="10" y="20" width="80" height="34" rx="11" fill="rgba(0,122,255,0.10)" stroke="rgba(0,122,255,0.28)" stroke-width="1"/>
+      <text x="50" y="35" font-size="10.5" font-weight="700" fill="#0055D4" text-anchor="middle" font-family="sans-serif">氹仔碼頭</text>
+      <text x="50" y="48" font-size="8.5" fill="rgba(0,85,212,0.55)" text-anchor="middle" font-family="sans-serif">Ferry Terminal</text>
+
+      <line x1="91" y1="37" x2="148" y2="37" stroke="#FF9500" stroke-width="2" stroke-dasharray="4,3"/>
+      <polygon points="148,33 156,37 148,41" fill="#FF9500"/>
+      <text x="122" y="31" font-size="8.5" font-weight="700" fill="#C07000" text-anchor="middle" font-family="sans-serif">發財車 免費</text>
+
+      <rect x="157" y="20" width="82" height="34" rx="11" fill="rgba(0,0,0,0.04)" stroke="rgba(255,149,0,0.30)" stroke-width="1"/>
+      <text x="198" y="35" font-size="10.5" font-weight="700" fill="rgba(0,0,0,0.65)" text-anchor="middle" font-family="sans-serif">澳門半島</text>
+      <text x="198" y="48" font-size="8.5" fill="rgba(0,0,0,0.35)" text-anchor="middle" font-family="sans-serif">大三巴 · 黃枝記</text>
+
+      <line x1="198" y1="55" x2="198" y2="90" stroke="rgba(0,0,0,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <text x="204" y="76" font-size="8.5" fill="rgba(0,0,0,0.30)" font-family="sans-serif">步行</text>
+
+      <rect x="157" y="92" width="82" height="34" rx="11" fill="rgba(0,0,0,0.04)" stroke="rgba(180,150,40,0.35)" stroke-width="1"/>
+      <text x="198" y="107" font-size="10.5" font-weight="700" fill="rgba(0,0,0,0.60)" text-anchor="middle" font-family="sans-serif">星際酒店</text>
+      <text x="198" y="120" font-size="8.5" fill="rgba(0,0,0,0.32)" text-anchor="middle" font-family="sans-serif">Sands</text>
+
+      <line x1="156" y1="109" x2="102" y2="109" stroke="#34C759" stroke-width="2" stroke-dasharray="4,3"/>
+      <polygon points="102,105 94,109 102,113" fill="#34C759"/>
+      <text x="128" y="103" font-size="8.5" font-weight="700" fill="#1A7A34" text-anchor="middle" font-family="sans-serif">銀河快線 免費</text>
+
+      <rect x="10" y="92" width="80" height="34" rx="11" fill="rgba(52,199,89,0.10)" stroke="rgba(52,199,89,0.30)" stroke-width="1"/>
+      <text x="50" y="107" font-size="10.5" font-weight="700" fill="#1A7A34" text-anchor="middle" font-family="sans-serif">澳門銀河</text>
+      <text x="50" y="120" font-size="8.5" fill="rgba(26,122,52,0.55)" text-anchor="middle" font-family="sans-serif">Galaxy Macau</text>
+
+      <line x1="50" y1="127" x2="50" y2="144" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <text x="58" y="142" font-size="8.5" fill="rgba(0,0,0,0.35)" font-family="sans-serif">搭車回碼頭 · 17:30</text>
+    </svg>
+  </div>
+
+  <div class="sec">官方交通資訊</div>
+  <div class="card">
+    <a href="https://www.mtr.com.hk/archive/ch/services/routemap.pdf" target="_blank" class="row">
+      <div class="ico i-red"><i class="fa-solid fa-train-subway"></i></div>
+      <div class="rt">
+        <div class="rt-title">港鐵 MTR 路線圖</div>
+        <div class="rt-sub">官方高清 PDF 版本</div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-link"></i></div>
+    </a>
+    <a href="https://www.hktramways.com/tc/interactive-map/" target="_blank" class="row">
+      <div class="ico i-green"><i class="fa-solid fa-train-tram"></i></div>
+      <div class="rt">
+        <div class="rt-title">叮叮車 互動路線圖</div>
+        <div class="rt-sub">香港電車官網</div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-link"></i></div>
+    </a>
+    <a href="https://www.instagram.com/p/DRBxhFaAWLD/?igsh=MTJsNmUwMzdnMWF4cg==" target="_blank" class="row">
+      <div class="ico i-orange"><i class="fa-solid fa-bus"></i></div>
+      <div class="rt">
+        <div class="rt-title">澳門發財車 時刻表</div>
+        <div class="rt-sub">各飯店免費接駁車整理</div>
+      </div>
+      <div class="map-btn"><i class="fa-solid fa-link"></i></div>
+    </a>
+  </div>
+  <div style="height:6px"></div>
+</div>
+
+</div><div class="tabbar" id="main-tab">
+  <div class="tab-indicator" id="tab-indicator"></div>
+  <div class="tab active" onclick="go('d1','chips-d1',this, 0)">
+    <i class="fa-solid fa-plane tab-ico"></i>
+    <div class="tab-lbl">6.20</div>
+  </div>
+  <div class="tab" onclick="go('d2','chips-d2',this, 1)">
+    <i class="fa-solid fa-city tab-ico"></i>
+    <div class="tab-lbl">6.21</div>
+  </div>
+  <div class="tab" onclick="go('d3','chips-d3',this, 2)">
+    <i class="fa-solid fa-ship tab-ico"></i>
+    <div class="tab-lbl">6.22</div>
+  </div>
+  <div class="tab" onclick="go('d4','chips-d4',this, 3)">
+    <i class="fa-solid fa-house tab-ico"></i>
+    <div class="tab-lbl">6.23</div>
+  </div>
+  <div class="tab" onclick="go('dmap','chips-map',this, 4)">
+    <i class="fa-solid fa-map-location-dot tab-ico"></i>
+    <div class="tab-lbl">路線</div>
+  </div>
+</div>
+
+<script>
+const header = document.getElementById('main-header');
+const tabBar = document.getElementById('main-tab');
+const indicator = document.getElementById('tab-indicator');
+const tabItems = document.querySelectorAll('.tab');
+
+let isScrolling;
+let currentIndex = 0;
+
+const viewIds = ['d1', 'd2', 'd3', 'd4', 'dmap'];
+const chipsIds = ['chips-d1', 'chips-d2', 'chips-d3', 'chips-d4', 'chips-map'];
+const headerDates = ['Jun 20', 'Jun 21', 'Jun 22', 'Jun 23', 'ROUTES'];
+
+function showUI() {
+  header.style.transform = 'translateY(0)';
+  header.style.opacity = '1';
+  tabBar.style.transform = 'translateY(0)';
+  tabBar.style.opacity = '1';
+}
+
+function hideUI() {
+  header.style.transform = 'translateY(calc(-100% - 20px))';
+  header.style.opacity = '0';
+  tabBar.style.transform = 'translateY(calc(100% + 20px))';
+  tabBar.style.opacity = '0';
+}
+
+function resetScrollTimer() {
+  window.clearTimeout(isScrolling);
+  if (!isTabDragging) {
+    isScrolling = setTimeout(hideUI, 1300);
+  }
+}
+
+// 監聽滾動事件
+window.addEventListener('scroll', function() {
+  showUI();
+  resetScrollTimer();
+}, { passive: true });
+
+// 剛進入網頁時 1.8 秒後隱藏
+isScrolling = setTimeout(hideUI, 1800);
+
+// 切換 Tab 核心函式
+function go(viewId, chipsId, el, index) {
+  currentIndex = index;
+
+  // 切換主要內容
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  
+  // 切換上方 Chips
+  chipsIds.forEach(id => { const e = document.getElementById(id); if(e) e.style.display='none'; });
+  const ch = document.getElementById(chipsId);
+  if(ch) ch.style.display='flex';
+
+  // 切換 Header 標題日期
+  if (headerDates[index] !== 'ROUTES') {
+      document.getElementById('header-date').innerHTML = headerDates[index] + '<br>2026';
+  } else {
+      document.getElementById('header-date').innerHTML = 'MTR & BUS<br>ROUTES';
+  }
+
+  // 切換 Tab 文字顏色
+  tabItems.forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  
+  // 滑動指示器定位
+  indicator.style.transform = `translateX(${currentIndex * 100}%)`;
+  
+  showUI();
+  resetScrollTimer();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==========================================
+// 拖曳 (Drag) 白色圈圈的互動邏輯
+// ==========================================
+let isTabDragging = false;
+let startX = 0;
+
+tabBar.addEventListener('touchstart', e => {
+  isTabDragging = true;
+  startX = e.changedTouches[0].screenX;
+  window.clearTimeout(isScrolling); 
+  showUI();
+  indicator.classList.add('dragging'); 
+}, { passive: true });
+
+tabBar.addEventListener('touchmove', e => {
+  if (!isTabDragging) return;
+  showUI(); 
+  window.clearTimeout(isScrolling);
+
+  const currentX = e.changedTouches[0].screenX;
+  const deltaX = currentX - startX;
+  const deltaPercent = (deltaX / indicator.offsetWidth) * 100;
+  let newTranslatePercent = (currentIndex * 100) + deltaPercent;
+
+  if (newTranslatePercent < 0) newTranslatePercent = 0;
+  if (newTranslatePercent > 400) newTranslatePercent = 400;
+
+  indicator.style.transform = `translateX(${newTranslatePercent}%)`;
+  e.preventDefault();
+}, { passive: false });
+
+tabBar.addEventListener('touchend', e => {
+  if (!isTabDragging) return;
+  isTabDragging = false;
+  indicator.classList.remove('dragging');
+  
+  const currentX = e.changedTouches[0].screenX;
+  const deltaX = currentX - startX;
+  const deltaPercent = (deltaX / indicator.offsetWidth) * 100;
+  let finalPercent = (currentIndex * 100) + deltaPercent;
+
+  let targetIndex = Math.round(finalPercent / 100);
+
+  if (targetIndex < 0) targetIndex = 0;
+  if (targetIndex >= tabItems.length) targetIndex = tabItems.length - 1;
+
+  // 觸發切換
+  go(viewIds[targetIndex], chipsIds[targetIndex], tabItems[targetIndex], targetIndex);
+  
+  resetScrollTimer();
+}, { passive: true });
+
+</script>
+</body>
+</html>
